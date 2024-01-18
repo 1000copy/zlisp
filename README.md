@@ -32,6 +32,10 @@ Support for more LISP primitives, including append, begin, car, cdr, cons, =, le
 
 I adhere to the philosophy of a straightforward implementation without any unnecessary techniques.
 
+## little footprint 
+
+- 897k with zig build
+- 90K with zig build -Doptimize=ReleaseSmall
 ## References
 
 Peter Norvig's LISP implementation in Python: [https://www.norvig.com/lispy.html](https://www.norvig.com/lispy.html)
