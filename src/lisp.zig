@@ -608,10 +608,13 @@ test "string" {
     try expect(try src.toNumber() == 123);
     src.deinit();
 }
-// const std = @import("std");
-const stdout = std.io.getStdOut().writer();
-const stdin = std.io.getStdIn().reader();
+// zig windows stdout print errorerror: unable to evaluate comptime expression
+// https://github.com/ziglang/zig/issues/6845
+// const stdout = std.io.getStdOut().writer();
+// const stdin = std.io.getStdIn().reader();
 pub fn main() !void {
+    const stdout = std.io.getStdOut().writer();
+    const stdin = std.io.getStdIn().reader();
     var buf: [1024]u8 = undefined;
     try stdout.print(">", .{});
     const user_input = stdin.readUntilDelimiter(buf[0..], '\n');
