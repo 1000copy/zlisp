@@ -17,8 +17,10 @@ I previously implemented a LISP interpreter in the C language. Now, I want to le
 
 ## What features are planned for the future?
 
-Support for more syntax, including strings, annotations, and references
-Support for more LISP primitives, including append, begin, car, cdr, cons, =, length, list, not, print, define, setq, repeat, load, eval
+- Support for more syntax, including strings, annotations, and references
+- Support for more LISP primitives, including
+
+     append, begin, car, cdr, cons, =, length, list, not, print, define, setq, repeat, load, eval
 
 ## How to contribute to the project?
 
