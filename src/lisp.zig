@@ -3,7 +3,12 @@ const std = @import("std");
 const ArrayList = std.ArrayList;
 const eql = std.mem.eql;
 const Allocator = std.mem.Allocator;
-const print = std.debug.print;
+// const print = std.debug.print;
+pub fn print(comptime fmt: []const u8, args: anytype) void {
+    std.io.getStdOut().writer().print(fmt, args) catch {
+        unreachable;
+    };
+}
 const LispError = error{ fnnotdef, symbolnotdef };
 pub const String = struct {
     buffer: ArrayList(u8),
@@ -327,6 +332,7 @@ pub const Parser = struct {
 // const String = lisp.String;
 const test_allocator = std.testing.allocator;
 test "cons" {
+    print("WTF\n", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var list = CList.init(allocator);
