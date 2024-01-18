@@ -25,7 +25,8 @@ Support for more LISP primitives, including append, begin, car, cdr, cons, =, le
 1. Sign into GitHub
 2. Fork the project repository
 3. Clone your fork
-4. Navigate to your local repository and code
+4. Navigate to your local repository and code or fix
+5. Run passed $zig build test
 5. Make your Pull Request
 
 ## ZLisp Zen
