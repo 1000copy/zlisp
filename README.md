@@ -12,8 +12,8 @@ I previously implemented a LISP interpreter in the C language. Now, I want to le
 
 ## Current implementation progress?
 
-Parsed the basic syntax of LISP language
-Implemented 4 LISP primitives, including addition, subtraction, multiplication, and division
+1. Parsed the basic syntax of LISP language
+2. Implemented 4 LISP primitives, including addition, subtraction, multiplication, and division
 
 ## What features are planned for the future?
 
