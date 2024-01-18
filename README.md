@@ -1,37 +1,38 @@
 # ZLisp 0.1
 
-哇哦，ZLisp是一个大约300行的一个LISP解释器，使用Zig语言编写出来。
+Wow, ZLisp is a LISP interpreter consisting of approximately 300 lines of code, written in the Zig programming language.
 
-## 为什么选择实现LISP？
+## Why choose to implement LISP?
 
-这是因为LISP语言拥有极度简洁的语法的同时，还可以有非常灵活和强大的表达能力。
+This is because LISP has an extremely concise syntax while also offering very flexible and powerful expressive capabilities.
 
-## 为什么选择用Zig实现？
+## Why choose to implement it in Zig?
 
-我曾经用C语言实现过一个LISP解释器，现在我想要学习Zig语言，并且想要借机对比两门语言的特点，是否果然Zig语言比C更好。
-我的结论是，Zig是更好的C。
+I previously implemented a LISP interpreter in the C language. Now, I want to learn the Zig language and take the opportunity to compare the characteristics of the two languages. My conclusion is that Zig is a better alternative to C.
 
-## 目前实现到什么程度？
+## Current implementation progress?
 
-解析LISP语言的基本语法
-实现4个LISP原语，包括加减乘除
+Parsed the basic syntax of LISP language
+Implemented 4 LISP primitives, including addition, subtraction, multiplication, and division
 
-## 未来还要做什么功能？
+## What features are planned for the future?
 
-支持更多语法，包括字符串，标注，标引
-支持更多LISP原语，包括append,begin,car,cdr,cons,=,length,list,not,print,define,setq,repeat,load,eval
+Support for more syntax, including strings, annotations, and references
+Support for more LISP primitives, including append, begin, car, cdr, cons, =, length, list, not, print, define, setq, repeat, load, eval
 
-## 如何参与对项目做贡献？
+## How to contribute to the project?
 
-1. Sign into GitHub 
-2. Fork the project repository 
-3. Clone your fork 
+1. Sign into GitHub
+2. Fork the project repository
+3. Clone your fork
 4. Navigate to your local repository and code
-5. make your Pull Request
+5. Make your Pull Request
+
 ## ZLisp Zen
 
-我信奉的是，绝对直截了当的实现意图，没有任何技巧
+I adhere to the philosophy of a straightforward implementation without any unnecessary techniques.
 
-## ref
+## References
 
-Peter norvig 's lisp written by python https://www.norvig.com/lispy.html
+Peter Norvig's LISP implementation in Python: [https://www.norvig.com/lispy.html](https://www.norvig.com/lispy.html)
+
