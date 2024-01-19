@@ -24,7 +24,7 @@ pub const String = struct {
     pub fn append(self: *String, str: []const u8) void {
         self.buffer.appendSlice(str) catch unreachable;
     }
-    pub fn eql(self: *String, str: []const u8) bool {
+    pub fn eql(self: String, str: []const u8) bool {
         return std.mem.eql(u8, self.buffer.items, str);
     }
     pub fn print(self: String) void {
@@ -100,6 +100,7 @@ pub const Sexpr = union(enum) {
         };
         return s;
     }
+    // tbd
     pub fn print(self: Sexpr) void {
         switch (self) {
             .atom => {
@@ -137,6 +138,9 @@ pub const CList = struct {
     len: usize,
     content: ArrayList(Sexpr),
     allocator: Allocator,
+    pub fn sexprs(self: CList, index: usize) Sexpr {
+        return self.content.items[index];
+    }
     pub fn def(self: CList, env: *Env) LispError!Sexpr {
         var i: usize = 0;
         var symbol: String = undefined;
@@ -181,10 +185,10 @@ pub const CList = struct {
     }
     pub fn eval(self: CList, env: *Env) LispError!Sexpr {
         var expr = self.content.items[0];
-        if (expr == .atom and expr.atom.symbol.eql("+")) {
+        if (expr == .atom and expr.atom == .symbol and expr.atom.symbol.eql("+")) {
             return self.plus(env);
         }
-        if (expr == .atom and expr.atom.symbol.eql("def")) {
+        if (expr == .atom and expr.atom == .symbol and expr.atom.symbol.eql("def")) {
             return self.def(env);
         }
         return LispError.fnnotdef;
@@ -316,23 +320,20 @@ pub const Parser = struct {
         }
     }
 };
-// const expect = @import("std").testing.expect;
-// const std = @import("std");
-// const ArrayList = std.ArrayList;
-// const eql = std.mem.eql;
 
-// const Allocator = std.mem.Allocator;
-// const print = std.debug.print;
-// const lisp = @import("lisp.zig");
-// const Parser = lisp.Parser;·
-// const CAtom = lisp.CAtom;
-// const CList = lisp.CList;
-// const Sexpr = lisp.Sexpr;
-// const Env = lisp.Env;
-// const String = lisp.String;
-const test_allocator = std.testing.allocator;
+test "testtemplate" {
+    try expect(1 == 1);
+}
+test "atom" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    var list = CList.init(allocator);
+    list.ltype = .tuple;
+    defer list.deinit();
+    try list.appendAtom(CAtom.init(allocator, "1"));
+    try expect(list.sexprs(0).atom.number == 1);
+}
 test "cons" {
-    // print("WTF\n", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var list = CList.init(allocator);
@@ -340,9 +341,47 @@ test "cons" {
     try list.appendAtom(CAtom.init(allocator, "+"));
     try list.appendAtom(CAtom.init(allocator, "1"));
     try list.appendAtom(CAtom.init(allocator, "2"));
-    list.print(); //( +  1  2 )
+    try expect(list.sexprs(0).atom.symbol.eql("+"));
+    try expect(list.sexprs(1).atom.number == 1);
+    try expect(list.sexprs(2).atom.number == 2);
 }
-test "cons complex list" {
+test "eval" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    var e = Env.init(allocator);
+    var src = Parser.init(allocator);
+    src.code.append("(+ 1 2)");
+    const s = try src.eval(src.parse(), &e);
+    try expect(s.atom.number == 3);
+}
+test "eval_tuple" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    var e = Env.init(allocator);
+    var src = Parser.init(allocator);
+    src.code.append("1");
+    const s = try src.eval(src.parse(), &e);
+    try expect(s.atom.number == 1);
+}
+test "eval_tuple_3" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    var e = Env.init(allocator);
+    var src = Parser.init(allocator);
+    src.code.append("1 2 3");
+    const s = try src.eval(src.parse(), &e);
+    try expect(s.atom.number == 3);
+}
+test "eval_emebed" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    var e = Env.init(allocator);
+    var src = Parser.init(allocator);
+    src.code.append("(+ 1 (+ 1 (+ 1 2)))");
+    const s = try src.eval(src.parse(), &e);
+    try expect(s.atom.number == 5);
+}
+test "cons_complex_list" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var list = CList.init(allocator);
@@ -356,145 +395,54 @@ test "cons complex list" {
     try list1.appendAtom(CAtom.init(allocator, "3"));
     try list1.appendAtom(CAtom.init(allocator, "4"));
     try list.appendList(list1);
-    list.print(); //( +  1  2  ( +  3  4 ) )
+    try expect(list.len == 4);
+    try expect(list.sexprs(3).list.len == 3);
 }
-test "parse_atom1" {
+test "parse_atom" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var src = Parser.init(allocator);
     src.code.append("1");
-    _ = src.parse();
+
+    const list = src.parse();
+    try expect(list.len == 1);
+    var e = Env.init(allocator);
+    const s = try src.eval(list, &e);
+    try expect(s == .atom);
+    try expect(s.atom.number == 1);
 }
 
-test "parse_atom2" {
+test "parse_tuple_2" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var src = Parser.init(allocator);
     src.code.append(" ab  cd ");
-    _ = src.parse();
+    const list = src.parse();
+    defer list.deinit();
+    try expect(list.ltype == .tuple);
+    try expect(list.len == 2);
 }
 test "parse_list1" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var src = Parser.init(allocator);
     src.code.append("(a b (c d))");
-    _ = src.parse();
+    const list = src.parse();
+    defer list.deinit();
+    try expect(list.ltype == .tuple);
+    try expect(list.sexprs(0).list.len == 3);
 }
 test "parse_list2" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var src = Parser.init(allocator);
-    src.code.append("(（a b） (c d))");
-    _ = src.parse();
+    src.code.append("((a b) (c d))");
+    const list = src.parse();
+    try expect(list.ltype == .tuple);
+    try expect(list.sexprs(0).list.len == 2);
+    try expect(list.sexprs(0).list.sexprs(0).list.len == 2);
+    try expect(list.sexprs(0).list.sexprs(1).list.len == 2);
 }
-test "eval1" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    var e = Env.init(allocator);
-    var src = Parser.init(allocator);
-    src.code.append("(+ 1 2)");
-    const s = try src.eval(src.parse(), &e);
-    //  和一般范型不一样的是，zig的类型没有引入特别的语法，而是把类型当场普通的value使用。和常量一样的使用。
-    print("{d}", .{s.atom.number});
-    // try expect(eql(u8, s.atom.symbol.items, "345"));
-    try expect(s.atom.number == 3);
-}
-test "eval2" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    var e = Env.init(allocator);
-    var src = Parser.init(allocator);
-    src.code.append("(+ 1 (+ 1 (+ 1 2)))");
-    const s = try src.eval(src.parse(), &e);
-    print("{d}", .{s.atom.number});
-    // try expect(s.atom.number == 5);
-}
-const MyError = error{
-    ZeroDivError,
-    TooBig,
-    TooSmall,
-};
-fn validate111(n: u32) !u32 {
-    if (n == 0) {
-        return MyError.ZeroDivError;
-    } else {
-        return n;
-    }
-}
-test "catch" {
-    _ = validate111(0) catch |err| {
-        if (err == MyError.ZeroDivError) {
-            print("{}", .{err});
-        }
-    };
-    // 很棒的文档。可以解决我的问题和困惑。https://notes.eatonphil.com/errors-and-zig.html
-    //But I also use catch with blocks sometimes:
-    // const number = parseU64(str, 10) catch {
-    //   // do some more complex stuff, maybe log, who knows
-    // };
-    // But that won't compile. So the "trick" is to combine Zig's named blocks with catch.
-    // 最后一件让我感到困惑的事是，当你在一个返回错误或非虚值的函数中使用 catch 时，catch 必须 "返回 "一个与函数类型相同的值。
-    var value = validate111(10) catch |err| blk: {
-        if (err == MyError.ZeroDivError) {
-            print("{}", .{err});
-        }
-        break :blk 999;
-    };
-    if (value != 0) {
-        print("{d}", .{value});
-    }
-}
-// 使用if处理error union的两种返回值情况的做法是这样的。 https://zig.news/edyu/zig-if-wtf-is-bool-48hhs
-test "tonumber" {
-    const foo = "22.345";
-    // var a : !i32;
-    if (std.fmt.parseFloat(f64, foo)) |a| {
-        // a = std.fmt.parseInt(i32, foo, 10);
-        print("{d}", .{a});
-    } else |err| {
-        print("err{}", .{err});
-    }
-}
-// try testing.expectError(error.InvalidCharacter, parseFloat(T, ""));
-// error一节的代码：https://zigcc.github.io/learning-zig/03-language-overview-part2.html
-const levelerror = error{
-    no1,
-    no2,
-};
-fn level3() !void {
-    return levelerror.no2;
-}
-fn level2() !void {
-    try level3();
-}
-fn level1() !void {
-    try level2();
-}
-test "todo" {
-    level1() catch |err| {
-        print("{}", .{err});
-    };
-}
-fn l3() !i32 {
-    return levelerror.no2;
-}
-fn l2() !i32 {
-    return 3;
-}
-test "iferror" {
-    // 分离error和返回值的方法
-    if (l2()) |result| {
-        print("{}", .{result});
-    } else |err| {
-        print("{}", .{err});
-    }
-    if (l3()) |result| {
-        print("{}", .{result});
-    } else |err| {
-        print("{}", .{err});
-    }
-}
-
 test "hashmap" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -503,58 +451,24 @@ test "hashmap" {
     try my_hash_map.put("a", s);
     var value = my_hash_map.get("a");
     if (value) |v| {
-        // got value "v"
         try expect(v.atom.number == 1);
     } else {
         // doesn't exist
-        print("bang", .{});
+        try expect(1 == 0);
     }
     s.deinit();
 }
-
-test "env1" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    var my_hash_map = std.StringHashMap(Sexpr).init(allocator);
-    const s = Sexpr.init_number(1);
-    try my_hash_map.put("a", s);
-    var value = my_hash_map.get("a");
-    if (value) |v| {
-        // got value "v"
-        try expect(v.atom.number == 1);
-    } else {
-        // doesn't exist
-        print("bang", .{});
-    }
-    s.deinit();
-}
-test "env2" {
+test "eval_with_def_symbol" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var e = Env.init(allocator);
-    var s = Sexpr.init_number(1);
-    var str = String.init(allocator);
-    defer str.deinit();
-    str.append("a");
-    try e.put(str, s);
-
-    var value = e.get(str);
-    if (value) |v| {
-        // got value "v"
-        // print("{}", .{v});
-        try expect(v.atom.number == 1);
-    } else {
-        // doesn't exist
-        print("bang", .{});
-    }
-    s.deinit();
-}
-// string作为函数参数的做法。
-fn astring(a: []const u8) void {
-    print("{s}", .{a});
-}
-test "string parameter of fn" {
-    astring("astring");
+    var src = Parser.init(allocator);
+    defer src.deinit();
+    src.code.append("(def a 2) (+ 1 a)");
+    const list = src.parse();
+    defer list.deinit();
+    const s = try src.eval(list, &e);
+    try expect(s.atom.number == 3);
 }
 test "eval with symbol" {
     // 设置Env
@@ -570,36 +484,19 @@ test "eval with symbol" {
     src.code.append("(+ 1 a)");
     const list = src.parse();
     const s = try src.eval(list, &e);
-    print("{d}", .{s.atom.number});
+    // print("{d}", .{s.atom.number});
     try expect(s.atom.number == 2);
     list.deinit();
     src.deinit();
     str.deinit();
 }
-test "eval with def symbol" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    var e = Env.init(allocator);
-    var src = Parser.init(allocator);
-    src.code.append("(def a 2) (+ 1 a)");
-    const list = src.parse();
-    const s = src.eval(list, &e);
-    if (s) |s1| {
-        print("{d}", .{s1.atom.number});
-        try expect(s1.atom.number == 3);
-    } else |err| {
-        print("{}", .{err});
-    }
-    list.deinit();
-    src.deinit();
-}
-// 解决问题：把(1)2解析成为（1 2）的错误
 test "parse with def symbol2" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var src = Parser.init(allocator);
     src.code.append("(1)2");
     const list = src.parse();
+    try expect(list.len == 2);
     list.deinit();
     src.deinit();
 }
@@ -614,10 +511,7 @@ test "string" {
     try expect(try src.toNumber() == 123);
     src.deinit();
 }
-// zig windows stdout print errorerror: unable to evaluate comptime expression
-// https://github.com/ziglang/zig/issues/6845
-// const stdout = std.io.getStdOut().writer();
-// const stdin = std.io.getStdIn().reader();
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
