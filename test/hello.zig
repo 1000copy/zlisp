@@ -1,22 +1,7 @@
 const std = @import("std");
-
-pub fn main() !void {
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("Hello, {s}!\n", .{"world"});
-}
-pub fn print(comptime fmt: []const u8, args: anytype) void {
-    std.io.getStdOut().writer().print(fmt, args) catch {
-        unreachable;
-    };
-}
+const expect = @import("std").testing.expect;
 test "test print suspend on Windows" {
-    print("WTF", .{});
+    // std.debug.print("WTF", .{});
+    try expect(1 == 1);
+    // try expect(1 == 2);
 }
-// pub fn print1(comptime fmt: []const u8, args: anytype) void {
-//     std.io.getStdOut().writer().print(fmt, args) catch |err| {
-//         std.debug.print("{}", .{err});
-//     };
-// }
-// test "test print suspend1 on Windows" {
-//     print1("WTF1", .{});
-// }
