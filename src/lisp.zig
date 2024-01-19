@@ -332,7 +332,7 @@ pub const Parser = struct {
 // const String = lisp.String;
 const test_allocator = std.testing.allocator;
 test "cons" {
-    print("WTF\n", .{});
+    // print("WTF\n", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     var list = CList.init(allocator);
